@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/models/ingredient.dart';
+
 
 class IngredientButton extends StatelessWidget {
-  final String assetImage;
-  final VoidCallback? onPressed;
+  final Ingredient ingredient;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   const IngredientButton({
-    required this.assetImage,
-    this.onPressed,
+    required this.ingredient,
+    required this.isSelected,
+    required this.onTap,
     Key? key,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onPressed,
+      onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
+          color: isSelected ? Colors.green.withOpacity(0.3) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               color: Colors.black26,
@@ -28,12 +32,24 @@ class IngredientButton extends StatelessWidget {
             ),
           ],
         ),
-        child: ClipOval(
-          child: Image.asset(
-            assetImage,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
-          ),
+        child: Row(
+          children: [
+            ClipOval(
+              child: Image.asset(
+                ingredient.image,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              ingredient.label,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            Spacer(),
+            if (isSelected) Icon(Icons.check_circle, color: Colors.green)
+          ],
         ),
       ),
     );
