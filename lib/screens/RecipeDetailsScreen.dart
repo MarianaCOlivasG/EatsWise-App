@@ -15,15 +15,21 @@ class RecipeDetailsScreen extends StatelessWidget {
             _CustomAppBar(),
             SliverList(
               delegate: SliverChildListDelegate([
-                RecipeCards(),
+                RecipeCards(
+                  label: 'hola mundo',
+                ),
                 SizedBox(
                   height: 20,
                 ),
-                RecipeCards(),
+                RecipeCards(
+                  label: 'hola mundo',
+                ),
                 SizedBox(
                   height: 20,
                 ),
-                RecipeCards(),
+                RecipeCards(
+                  label: 'hola mundo',
+                ),
               ]),
             )
           ]
@@ -40,7 +46,7 @@ class _CustomAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-        backgroundColor: MyColors.primary,
+        backgroundColor: Colors.white,
         expandedHeight: 200,
         floating: false,
         pinned: true,
@@ -53,7 +59,7 @@ class _CustomAppBar extends StatelessWidget {
               padding: EdgeInsets.only(bottom: 10, right: 10, left: 10),
               alignment: Alignment.bottomCenter,
               child: Text('Prueba titulo 1', 
-                style: TextStyle(fontSize: 16, color: Colors.white),
+                style: TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
               )),
           background: FadeInImage(

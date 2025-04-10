@@ -9,5 +9,7 @@ final Map<String, Widget Function(BuildContext)> routes = {
   'home': (_) => const HomeScreen(),
   'splash': (_) => const SplashScreen(),
   'info-user': (_) => const InfoUser(),
+  'search': (_) => const SearchScreen(),
+  'details': (_) => const RecipeDetailsScreen(),
 
 };

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/providers/ingredient_provider.dart';
+import 'package:myapp/theme/my_colors.dart';
+import 'package:myapp/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
 
 class InputSearch extends SearchDelegate<String> {
@@ -14,7 +16,7 @@ class InputSearch extends SearchDelegate<String> {
         IconButton(
           icon: Icon(Icons.clear),
           onPressed: () {
-            query = '';  // Limpiar el texto de búsqueda
+            query = '';
           },
         ),
     ];
@@ -27,109 +29,170 @@ class InputSearch extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
-    return Column(
-      children: [
-        // Mostrar los ingredientes seleccionados
-        if (query.isNotEmpty) _buildSelectedIngredients(context),
-
-        // Mostrar la lista de ingredientes disponibles
-        Expanded(child: _buildIngredientList(context)),
-      ],
-    );
+    return _buildContent(context);
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = ingredients
+    return _buildContent(context);
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final provider = Provider.of<IngredientProvider>(context);
+    final selected = provider.selectedIngredients;
+
+    final filtered = ingredients
         .where((ingredient) =>
             ingredient['label']!.toLowerCase().contains(query.toLowerCase()))
         .toList();
 
-    return ListView.builder(
-      itemCount: suggestions.length,
-      itemBuilder: (context, index) {
-        final ingredient = suggestions[index];
-        return ListTile(
-          leading: Image.asset(ingredient['image']!),
-          title: Text(ingredient['label']!),
-          trailing: Icon(
-            Icons.check,
-            color: Provider.of<IngredientProvider>(context)
-                    .selectedIngredients
-                    .contains(ingredient['value'])
-                ? Colors.green
-                : Colors.transparent,
+    return Stack(
+      children: [
+        // Contenido desplazable
+        Padding(
+          padding: EdgeInsets.only(bottom: selected.isNotEmpty ? 70 : 0),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildSelectedIngredients(context),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final ingredient = filtered[index];
+                    final isSelected = selected.contains(ingredient['value']);
+                    return ListTile(
+                      leading: Image.asset(ingredient['image']!),
+                      title: Text(ingredient['label']!),
+                      trailing: Icon(
+                        Icons.check,
+                        color: isSelected ? Colors.green : Colors.transparent,
+                      ),
+                      onTap: () {
+                        provider.toggleIngredient(ingredient['value']!);
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          onTap: () {
-            // Actualizar la selección usando el Provider
-            Provider.of<IngredientProvider>(context, listen: false)
-                .toggleIngredient(ingredient['value']!);
-          },
-        );
-      },
+        ),
+
+        // Botón fijo abajo si hay seleccionados
+        if (selected.isNotEmpty)
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 20
+                ),
+                width: MediaQuery.of(context).size.width,
+                child: CustomButton(
+                  text: 'Empezar a cocinar', 
+                  color: MyColors.primary,
+                  onPressed: () {
+                    Navigator.pushNamed(context, 'search');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "¡Vamos a cocinar con: ${selected.join(', ')}!",
+                        ),
+                      ),
+                    );
+                  },
+                )
+                
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  // Construir los ingredientes seleccionados
-  Widget _buildSelectedIngredients(BuildContext context) {
-    final selectedIngredients =
-        Provider.of<IngredientProvider>(context).selectedIngredients;
+  
 
-    return Container(
-      padding: EdgeInsets.all(8),
+  Widget _buildSelectedIngredients(BuildContext context) {
+  final provider = Provider.of<IngredientProvider>(context);
+  final selected = provider.selectedIngredients;
+
+  final selectedData = ingredients
+      .where((ingredient) => selected.contains(ingredient['value']))
+      .toList();
+
+  if (selectedData.isEmpty) return SizedBox.shrink();
+
+  return SizedBox(
+    width: MediaQuery.of(context).size.width,
+    child: Padding(
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Ingredientes seleccionados:',
+          Text("Ingredientes seleccionados:",
               style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: selectedIngredients.map((ingredient) {
-              return Chip(
-                label: Text(ingredient),
-                onDeleted: () => Provider.of<IngredientProvider>(context,
-                        listen: false)
-                    .toggleIngredient(ingredient),
-                deleteIcon: Icon(Icons.close),
-              );
-            }).toList(),
+          SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: selectedData.map((ingredient) {
+                return Container(
+                  margin: EdgeInsets.only(right: 12),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 30 * 0.7, 
+                            backgroundImage: AssetImage(ingredient['image']!),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            ingredient['label']!,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: GestureDetector(
+                          onTap: () {
+                            provider.toggleIngredient(ingredient['value']!);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: EdgeInsets.all(3),
+                            child: Icon(
+                              Icons.close,
+                              size: 12 * 0.7, // Reducido al 70% del tamaño original (30% más pequeño)
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  // Construir la lista de ingredientes filtrados por query
-  Widget _buildIngredientList(BuildContext context) {
-    // Filtrar los ingredientes según el query de búsqueda
-    final filteredIngredients = ingredients
-        .where((ingredient) =>
-            ingredient['label']!.toLowerCase().contains(query.toLowerCase()))
-        .toList();
 
-    return ListView.builder(
-      itemCount: filteredIngredients.length,
-      itemBuilder: (context, index) {
-        final ingredient = filteredIngredients[index];
-        return ListTile(
-          leading: Image.asset(ingredient['image']!),
-          title: Text(ingredient['label']!),
-          trailing: Icon(
-            Icons.check,
-            color: Provider.of<IngredientProvider>(context)
-                    .selectedIngredients
-                    .contains(ingredient['value'])
-                ? Colors.green
-                : Colors.transparent,
-          ),
-          onTap: () {
-            // Actualizar la selección usando el Provider
-            Provider.of<IngredientProvider>(context, listen: false)
-                .toggleIngredient(ingredient['value']!);
-          },
-        );
-      },
-    );
-  }
 }

@@ -1,24 +1,27 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class Cast {
+class Recipe {
   final String name;
   final String image;
 
-  Cast({required this.name, required this.image});
+  Recipe({required this.name, required this.image});
 }
 
 class RecipeCards extends StatelessWidget {
-  const RecipeCards({super.key});
 
-  Future<List<Cast>> getRecipes() async {
+  final String label;
+
+  const RecipeCards({super.key, required this.label});
+
+  Future<List<Recipe>> getRecipes() async {
     await Future.delayed(Duration(seconds: 2));
     return [
-      Cast(name: 'Pollo con Salsa de limón', image: 'https://picsum.photos/200'),
-      Cast(name: 'Salteado de Repollo con Huevo Frito', image: 'https://picsum.photos/200'),
-      Cast(name: 'Lasaña de Berenjenas con Pollo', image: 'https://picsum.photos/200'),
-      Cast(name: 'Pavo con Pasta y ensalada de Tomate y Aguacate', image: 'https://picsum.photos/200'),
-      Cast(name: 'Albóndigas con Brócoli y Patatas', image: 'https://picsum.photos/200'),
+      Recipe(name: 'Pollo con Salsa de limón', image: 'https://picsum.photos/200'),
+      Recipe(name: 'Salteado de Repollo con Huevo Frito', image: 'https://picsum.photos/200'),
+      Recipe(name: 'Lasaña de Berenjenas con Pollo', image: 'https://picsum.photos/200'),
+      Recipe(name: 'Pavo con Pasta y ensalada de Tomate y Aguacate', image: 'https://picsum.photos/200'),
+      Recipe(name: 'Albóndigas con Brócoli y Patatas', image: 'https://picsum.photos/200'),
     ];
   }
 
@@ -29,7 +32,7 @@ class RecipeCards extends StatelessWidget {
 
     return FutureBuilder(
       future: getRecipes(),
-      builder: (_, AsyncSnapshot<List<Cast>> snapshot) {
+      builder: (_, AsyncSnapshot<List<Recipe>> snapshot) {
         if (!snapshot.hasData) {
           return Container(
             constraints: BoxConstraints(maxWidth: screenWidth * 0.4),
@@ -38,40 +41,43 @@ class RecipeCards extends StatelessWidget {
           );
         }
 
-        final List<Cast> cast = snapshot.data!;
+        final List<Recipe> cast = snapshot.data!;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Nuevas recetas',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18
+
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text( label ,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18
+                    ),
                   ),
-                ),
-                TextButton(
-                  onPressed: () {
-        
-                  }, 
-                  child: Text('Ver todas')
-                )
-              ],
+                  TextButton(
+                    onPressed: () {
+                      
+                    }, 
+                    child: Text('Ver todas')
+                  )
+                ],
+              ),
             ),
             
-            Container(
-              margin: EdgeInsets.only(top: 10),
-              child: SizedBox(
-                width: screenWidth,
-                height: screenHeight * 0.30,
-                child: ListView.builder(
-                  physics: BouncingScrollPhysics(),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: cast.length,
-                  itemBuilder: (_, int index) => _RecipeCard(cast[index], screenWidth, screenHeight),
-                ),
+            SizedBox(
+              width: screenWidth,
+              height: screenHeight * 0.30,
+              child: ListView.builder(
+                physics: BouncingScrollPhysics(),
+                scrollDirection: Axis.horizontal,
+                itemCount: cast.length,
+                itemBuilder: (_, int index) => _RecipeCard(cast[index], screenWidth, screenHeight),
               ),
             ),
           ],
@@ -82,11 +88,11 @@ class RecipeCards extends StatelessWidget {
 }
 
 class _RecipeCard extends StatelessWidget {
-  final Cast actor;
+  final Recipe recipe;
   final double screenWidth;
   final double screenHeight;
 
-  const _RecipeCard(this.actor, this.screenWidth, this.screenHeight);
+  const _RecipeCard(this.recipe, this.screenWidth, this.screenHeight);
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +110,7 @@ class _RecipeCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: FadeInImage(
               placeholder: AssetImage('assets/no-image.png'),
-              image: NetworkImage(actor.image),
+              image: NetworkImage(recipe.image),
               height: cardHeight, // 85% of the card height for the image
               width: cardWidth, // Full width of the card
               fit: BoxFit.cover,
@@ -112,7 +118,7 @@ class _RecipeCard extends StatelessWidget {
           ),
           SizedBox(height: screenHeight * 0.01),
           Text(
-            actor.name,
+            recipe.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.left, // Align text to the left

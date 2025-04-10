@@ -1,6 +1,7 @@
 
 
 export 'package:myapp/screens/RecipeDetailsScreen.dart';
+export 'package:myapp/screens/SearchScreen.dart';
 export 'package:myapp/screens/RegisterFormScreen.dart';
 export 'package:myapp/screens/InfoUserScreen.dart';
 export 'package:myapp/screens/SplashScreen.dart';

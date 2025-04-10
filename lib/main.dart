@@ -34,6 +34,12 @@ class MyApp extends StatelessWidget {
         title: 'Chat',
         routes: routes,
         initialRoute: 'splash',
+        theme: ThemeData(
+          scaffoldBackgroundColor: Colors.white, 
+          appBarTheme: AppBarTheme(
+            backgroundColor: Colors.white
+          )
+        ),
       ),
     );
   }
