@@ -11,8 +11,8 @@ class IngredientButton extends StatelessWidget {
     required this.ingredient,
     required this.isSelected,
     required this.onTap,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

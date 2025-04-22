@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/theme/my_colors.dart';
 import 'package:myapp/widgets/widgets.dart';
 
 class RecipeDetailsScreen extends StatelessWidget {

@@ -46,6 +46,7 @@ class AuthProvider with ChangeNotifier {
 
 
   Future<AuthResponse> login( String email, String password ) async {
+    print(Environments.apiUrl);
 
     isAuthenticating = true;
 

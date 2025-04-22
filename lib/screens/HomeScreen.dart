@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/providers/auth_provider.dart';
+import 'package:myapp/screens/LoginScreen.dart';
+import 'package:myapp/screens/RecipeSteps.dart';
+import 'package:myapp/screens/StoreUnionScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/widgets/widgets.dart';
 
@@ -39,6 +42,14 @@ class HomeScreen extends StatelessWidget {
               height: 20,
             ),
 
+            ElevatedButton(
+              onPressed: () => {
+                Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => const StoreUnionScreen(),
+                ))
+              },
+              child: Text('Comprar ingredientes'),
+            ),
 
             RecipeCards(
               label: 'Nuevas recetas',
