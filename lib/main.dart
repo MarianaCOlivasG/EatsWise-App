@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/providers/auth_provider.dart';
 import 'package:myapp/providers/ingredient_provider.dart';
+import 'package:myapp/providers/recipe_provider.dart';
 import 'package:myapp/providers/stepper_provider.dart';
 import 'package:myapp/routes/routes.dart';
 import 'package:provider/provider.dart';
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider( create: (_) => AuthProvider() ),
         ChangeNotifierProvider( create: (_) => StepperProvider() ),
         ChangeNotifierProvider( create: (_) => IngredientProvider() ),
+        ChangeNotifierProvider( create: (_) => RecipeProvider() ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

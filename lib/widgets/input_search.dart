@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/providers/ingredient_provider.dart';
+import 'package:myapp/providers/recipe_provider.dart';
 import 'package:myapp/theme/my_colors.dart';
 import 'package:myapp/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
@@ -95,16 +96,34 @@ class InputSearch extends SearchDelegate<String> {
                 child: CustomButton(
                   text: 'Empezar a cocinar', 
                   color: MyColors.primary,
-                  onPressed: () {
-                    Navigator.pushNamed(context, 'search');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "¡Vamos a cocinar con: ${selected.join(', ')}!",
+                  onPressed: () async {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) => AlertDialog(
+                        content: Row(
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(width: 20),
+                            Expanded(child: Text("Nuestra IA está trabajando...")),
+                          ],
                         ),
                       ),
                     );
-                  },
+
+                    try {
+                      final ingredientProvider = Provider.of<IngredientProvider>(context, listen: false);
+                      final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
+
+                      await recipeProvider.getRecipes(ingredientProvider.selectedIngredients);
+                    } finally {
+                      // Cierra el diálogo después de la petición, incluso si hay error
+                      Navigator.of(context).pop();
+                    }
+
+                    Navigator.pushNamed(context, 'search');
+                  }
+
                 )
                 
               ),
