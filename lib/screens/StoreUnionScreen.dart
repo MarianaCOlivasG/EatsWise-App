@@ -1,10 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:myapp/theme/my_colors.dart';
+
+// Formatter para la fecha MM/AA que inserta '/' automáticamente
+class ExpirationDateFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var text = newValue.text;
+
+    // Eliminar todo lo que no sea número
+    text = text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    final buffer = StringBuffer();
+
+    for (int i = 0; i < text.length && i < 4; i++) {
+      if (i == 2) buffer.write('/');
+      buffer.write(text[i]);
+    }
+
+    final string = buffer.toString();
+
+    return TextEditingValue(
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
+    );
+  }
+}
 
 class StoreUnionScreen extends StatefulWidget {
   const StoreUnionScreen({Key? key}) : super(key: key);
 
   @override
-  _StoreUnionScreenState createState() => _StoreUnionScreenState();
+  State<StoreUnionScreen> createState() => _StoreUnionScreenState();
 }
 
 class _StoreUnionScreenState extends State<StoreUnionScreen> {
@@ -34,10 +66,12 @@ class _StoreUnionScreenState extends State<StoreUnionScreen> {
         .toList();
 
     final cantidades = seleccionados
-        .map((ingrediente) => {
-              'ingrediente': ingrediente,
-              'cantidad': cantidadesSeleccionadas[ingrediente] ?? 0.5,
-            })
+        .map(
+          (ingrediente) => {
+            'ingrediente': ingrediente,
+            'cantidad': cantidadesSeleccionadas[ingrediente] ?? 0.5,
+          },
+        )
         .toList();
 
     if (seleccionados.isNotEmpty) {
@@ -49,7 +83,7 @@ class _StoreUnionScreenState extends State<StoreUnionScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleccione al menos un ingrediente')),
+        const SnackBar(content: Text('Seleccione al menos un ingrediente',)),
       );
     }
   }
@@ -58,7 +92,9 @@ class _StoreUnionScreenState extends State<StoreUnionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Selecciona Ingredientes y Cantidades'),
+        title: const Text(
+          'Selecciona Ingredientes',
+        ),
       ),
       body: ListView(
         children: ingredientes.map((ingrediente) {
@@ -77,6 +113,7 @@ class _StoreUnionScreenState extends State<StoreUnionScreen> {
                       ),
                       Switch(
                         value: ingredientesSeleccionados[ingrediente]!,
+                        activeColor: MyColors.primary,
                         onChanged: (bool value) {
                           setState(() {
                             ingredientesSeleccionados[ingrediente] = value;
@@ -94,9 +131,9 @@ class _StoreUnionScreenState extends State<StoreUnionScreen> {
                             value: cantidadesSeleccionadas[ingrediente]!,
                             min: 0.5,
                             max: 10.0,
-                            divisions: 19, // Incrementos de 0.5 kg
-                            label:
-                                '${cantidadesSeleccionadas[ingrediente]!.toStringAsFixed(1)} kg',
+                            divisions: 19,
+                            label: '${cantidadesSeleccionadas[ingrediente]!.toStringAsFixed(1)} kg',
+                            activeColor: MyColors.primary,
                             onChanged: (double value) {
                               setState(() {
                                 cantidadesSeleccionadas[ingrediente] = value;
@@ -106,7 +143,9 @@ class _StoreUnionScreenState extends State<StoreUnionScreen> {
                         ),
                         Text(
                           '${cantidadesSeleccionadas[ingrediente]!.toStringAsFixed(1)} kg',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -119,106 +158,155 @@ class _StoreUnionScreenState extends State<StoreUnionScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _buscarTiendas,
         tooltip: 'Buscar Tiendas',
+        backgroundColor: Colors.green,
         child: const Icon(Icons.search),
       ),
     );
   }
 }
 
-class NearbyStoresScreen extends StatelessWidget {
+class NearbyStoresScreen extends StatefulWidget {
   final List<Map<String, dynamic>> ingredientes;
 
-  // Lista de tiendas con precios por kilogramo
+  const NearbyStoresScreen({required this.ingredientes, Key? key})
+      : super(key: key);
+
+  @override
+  State<NearbyStoresScreen> createState() => _NearbyStoresScreenState();
+}
+
+class _NearbyStoresScreenState extends State<NearbyStoresScreen> {
   final List<Map<String, dynamic>> tiendas = [
     {
       'nombre': 'Tienda Central',
       'ubicacion': 'Calle 123',
-      'ingredientes': {
-        'Tomate': 1.50,
-        'Lechuga': 0.75,
-        'Cebolla': 0.80,
-      },
+      'latlng': LatLng(20.985, -89.615),
+      'ingredientes': {'Tomate': 1.50, 'Lechuga': 0.75, 'Cebolla': 0.80},
     },
     {
       'nombre': 'Supermercado Express',
       'ubicacion': 'Avenida 456',
-      'ingredientes': {
-        'Pepino': 1.00,
-        'Queso': 2.50,
-        'Pan': 1.20,
-      },
+      'latlng': LatLng(20.987, -89.617),
+      'ingredientes': {'Pepino': 1.00, 'Queso': 2.50, 'Pan': 1.20},
     },
   ];
-
-  NearbyStoresScreen({required this.ingredientes, Key? key})
-      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final tiendasFiltradas = tiendas.where((tienda) {
       final ingTienda = tienda['ingredientes'] as Map<String, double>;
-      return ingredientes.any((ing) =>
-          ingTienda.keys.contains(ing['ingrediente']) &&
-          ing['cantidad'] > 0); // Validar que la cantidad sea mayor que 0
+      return widget.ingredientes.any(
+        (ing) =>
+            ingTienda.keys.contains(ing['ingrediente']) &&
+            ing['cantidad'] > 0,
+      );
     }).toList();
+
+    LatLng mapaCentro =
+        tiendasFiltradas.isNotEmpty ? tiendasFiltradas[0]['latlng'] : LatLng(20.985, -89.615);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tiendas Cercanas'),
+        backgroundColor: Colors.green,
       ),
-      body: ListView.builder(
-        itemCount: tiendasFiltradas.length,
-        itemBuilder: (context, index) {
-          final tienda = tiendasFiltradas[index];
-          final ingTienda = tienda['ingredientes'] as Map<String, double>;
-
-          final ingredientesDisponibles = ingredientes
-              .where((ing) => ingTienda.containsKey(ing['ingrediente']))
-              .map((ing) => {
-                    'nombre': ing['ingrediente'],
-                    'cantidad': ing['cantidad'],
-                    'precio': ingTienda[ing['ingrediente']],
-                  })
-              .toList();
-
-          return Card(
-            margin: const EdgeInsets.all(8),
-            child: ListTile(
-              title: Text(tienda['nombre']),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Ubicación: ${tienda['ubicacion']}'),
-                  ...ingredientesDisponibles.map((ing) => Text(
-                      '${ing['nombre']} x${ing['cantidad']} kg: \$${((ing['precio'] as double) * (ing['cantidad'] as double)).toStringAsFixed(2)}')),
-                ],
-              ),
-              trailing: ElevatedButton(
-                onPressed: () async {
-                  await _confirmarCompra(context);
-                },
-                child: const Text('Comprar'),
-              ),
+      body: Column(
+        children: [
+          SizedBox(
+            height: 250,
+            child: FlutterMap(
+              options: MapOptions(initialCenter: mapaCentro, initialZoom: 15.0),
+              children: [
+                TileLayer(
+                  urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  subdomains: const ['a', 'b', 'c'],
+                ),
+                MarkerLayer(
+                  markers: [
+                    ...tiendasFiltradas.map((tienda) {
+                      return Marker(
+                        point: tienda['latlng'],
+                        child: const Icon(
+                          Icons.store,
+                          color: Colors.red,
+                          size: 30,
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ],
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Tiendas Disponibles:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: tiendasFiltradas.length,
+              itemBuilder: (context, index) {
+                final tienda = tiendasFiltradas[index];
+                final ingTienda = tienda['ingredientes'] as Map<String, double>;
+
+                final ingredientesDisponibles = widget.ingredientes
+                    .where((ing) => ingTienda.containsKey(ing['ingrediente']))
+                    .map(
+                      (ing) => {
+                        'nombre': ing['ingrediente'],
+                        'cantidad': ing['cantidad'],
+                        'precio': ingTienda[ing['ingrediente']],
+                      },
+                    )
+                    .toList();
+
+                return Card(
+                  margin: const EdgeInsets.all(8),
+                  child: ListTile(
+                    title: Text(tienda['nombre']),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Ubicación: ${tienda['ubicacion']}'),
+                        ...ingredientesDisponibles.map(
+                          (ing) => Text(
+                            '${ing['nombre']} x${ing['cantidad']} kg: \$${((ing['precio'] as double) * (ing['cantidad'] as double)).toStringAsFixed(2)}',
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: ElevatedButton(
+                      onPressed: () => _confirmarCompra(context, tienda['nombre']),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                      child: const Text('Comprar'),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _confirmarCompra(BuildContext context) async {
-    // Paso 1: Seleccionar ubicación
+  Future<void> _confirmarCompra(
+    BuildContext context,
+    String nombreTienda,
+  ) async {
     final opcionEntrega = await showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text("Ubicación de Entrega"),
           content: const Text(
-              "¿Los ingredientes serán entregados a la ubicación actual o a otra?"),
+            "¿Los ingredientes serán entregados a la ubicación de la tienda o a otra ubicación?",
+          ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, "actual"),
-              child: const Text("Actual"),
+              onPressed: () => Navigator.pop(context, "tienda"),
+              child: const Text("Ubicación Actual"),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, "otra"),
@@ -231,28 +319,30 @@ class NearbyStoresScreen extends StatelessWidget {
 
     if (opcionEntrega == null) return;
 
-    String selectedLocation = "";
     if (opcionEntrega == "otra") {
-      // Solicitar ubicación ingresada por el usuario
       final inputLocation = await showDialog<String>(
         context: context,
         builder: (context) {
-          final locationController = TextEditingController();
+          final controller = TextEditingController();
           return AlertDialog(
-            title: const Text("Introduzca la Ubicación"),
+            title: const Text("Ingresar Ubicación"),
             content: TextField(
-              controller: locationController,
-              decoration:
-                  const InputDecoration(hintText: "Ubicación"),
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: "Dirección o ubicación",
+              ),
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context, null),
+                onPressed: () => Navigator.pop(context),
                 child: const Text("Cancelar"),
               ),
               TextButton(
-                onPressed: () => Navigator.pop(
-                    context, locationController.text),
+                onPressed: () {
+                  if (controller.text.trim().isNotEmpty) {
+                    Navigator.pop(context, controller.text.trim());
+                  }
+                },
                 child: const Text("Aceptar"),
               ),
             ],
@@ -260,88 +350,136 @@ class NearbyStoresScreen extends StatelessWidget {
         },
       );
 
-      if (inputLocation == null || inputLocation.trim().isEmpty) {
-        return;
+      if (inputLocation != null && inputLocation.isNotEmpty) {
+        _mostrarFormularioPago(context, nombreTienda, inputLocation);
       }
-      selectedLocation = inputLocation;
     } else {
-      selectedLocation = "Ubicación actual del dispositivo";
+      // Ubicación actual de la tienda
+      _mostrarFormularioPago(context, nombreTienda, "Ubicación de la tienda");
     }
+  }
 
-    // Paso 2: Solicitar datos de tarjeta
-    final cardProvided = await showDialog<bool>(
+  void _mostrarFormularioPago(
+    BuildContext context,
+    String tienda,
+    String ubicacion,
+  ) {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+    final cardNumberController = TextEditingController();
+    final expirationDateController = TextEditingController();
+    final cvvController = TextEditingController();
+
+    showDialog<void>(
       context: context,
       builder: (context) {
-        final cardNumberController = TextEditingController();
-        final cardNameController = TextEditingController();
-        final cardCVVController = TextEditingController();
-        final cardExpiryController = TextEditingController();
-
         return AlertDialog(
-          title: const Text("Datos de Tarjeta"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: cardNumberController,
-                decoration: const InputDecoration(
-                    hintText: "Número de tarjeta"),
-                keyboardType: TextInputType.number,
+          title: Text('Comprar en $tienda'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Entrega en: $ubicacion'),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre completo',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Ingrese su nombre completo';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: cardNumberController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 16,
+                    decoration: const InputDecoration(
+                      labelText: 'Número de tarjeta',
+                      border: OutlineInputBorder(),
+                      counterText: '',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.length != 16) {
+                        return 'Ingrese un número de tarjeta válido de 16 dígitos';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: expirationDateController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 5,
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha de expiración (MM/AA)',
+                      border: OutlineInputBorder(),
+                      counterText: '',
+                    ),
+                    inputFormatters: [ExpirationDateFormatter()],
+                    validator: (value) {
+                      if (value == null || value.length != 5) {
+                        return 'Ingrese fecha en formato MM/AA';
+                      }
+                      final parts = value.split('/');
+                      final month = int.tryParse(parts[0]);
+                      final year = int.tryParse(parts[1]);
+                      if (month == null || year == null || month < 1 || month > 12) {
+                        return 'Fecha inválida';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: cvvController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'CVV',
+                      border: OutlineInputBorder(),
+                      counterText: '',
+                    ),
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.length != 3) {
+                        return 'Ingrese un CVV válido de 3 dígitos';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
               ),
-              TextField(
-                controller: cardNameController,
-                decoration: const InputDecoration(
-                    hintText: "Nombre del titular"),
-              ),
-              TextField(
-                controller: cardCVVController,
-                decoration: const InputDecoration(
-                    hintText: "CVV (Código de seguridad)"),
-                keyboardType: TextInputType.number,
-                maxLength: 3,
-              ),
-              TextField(
-                controller: cardExpiryController,
-                decoration: const InputDecoration(
-                    hintText: "Fecha de vencimiento (MM/AA)"),
-              ),
-            ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("Cancelar"),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
-                // Validamos que ningún campo esté vacío
-                if (cardNumberController.text.isEmpty ||
-                    cardNameController.text.isEmpty ||
-                    cardCVVController.text.isEmpty ||
-                    cardExpiryController.text.isEmpty) {
+                if (formKey.currentState!.validate()) {
+                  // Aquí enviar los datos de pago
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Por favor, complete todos los campos')),
+                    const SnackBar(content: Text('Compra realizada con éxito')),
                   );
-                  return;
+                  Navigator.pop(context);
                 }
-
-                // Validación exitosa, cerramos el diálogo
-                Navigator.pop(context, true);
               },
-              child: const Text("Aceptar"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text('Confirmar compra'),
             ),
           ],
         );
       },
-    );
-
-    if (cardProvided != true) return;
-
-    // Confirmación final
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Compra realizada exitosamente!')),
     );
   }
 }

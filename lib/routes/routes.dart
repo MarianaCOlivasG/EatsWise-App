@@ -10,8 +10,8 @@ final Map<String, Widget Function(BuildContext)> routes = {
   'splash': (_) => const SplashScreen(),
   'info-user': (_) => const InfoUser(),
   'search': (_) => const SearchScreen(),
-  'details': (_) => const RecipeDetailsScreen(),
+  //'details': (_) => const RecipeDetailsScreen(),
   'do-not-throw-it-away': (_) => const DoNotThrowItAway(),
-  'recipe-steps': (_) => const RecipeSteps(),
+  //'recipe-steps': (_) => const RecipeSteps(),
   'store-union': (_) => const StoreUnionScreen(),
 };

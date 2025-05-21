@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:myapp/global/environments.dart';
 import 'package:myapp/models/auth_response.dart';
 import 'package:myapp/models/complete_profile_response.dart';
+import 'package:myapp/models/profile.dart';
 import 'package:myapp/models/user.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -175,5 +176,10 @@ class AuthProvider with ChangeNotifier {
   Future logout() async {
     await _storage.delete(key: 'accessToken');
   }
+
+  void updateProfileLocally(Profile updatedProfile) {
+  user.profile = updatedProfile;
+  notifyListeners();
+}
 
 }

@@ -1,70 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/widgets/widgets.dart';
+import 'package:myapp/providers/recipe_provider.dart';
+import 'package:provider/provider.dart';
 
 class RecipeDetailsScreen extends StatelessWidget {
-  const RecipeDetailsScreen({super.key});
+  final int recipeIndex;
+
+  const RecipeDetailsScreen({Key? key, required this.recipeIndex}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final recipes = Provider.of<RecipeProvider>(context).recipes;
+
+    // Validar que el índice sea válido
+    if (recipeIndex < 0 || recipeIndex >= recipes.length) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Error')),
+        body: const Center(child: Text('Receta no encontrada')),
+      );
+    }
+
+    final recipe = recipes[recipeIndex];
+
     return Scaffold(
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: BouncingScrollPhysics(),
-          slivers: [
-            _CustomAppBar(),
-            SliverList(
-              delegate: SliverChildListDelegate([
-                RecipeCards(
-                  label: 'hola mundo',
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-                RecipeCards(
-                  label: 'hola mundo',
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-                RecipeCards(
-                  label: 'hola mundo',
-                ),
-              ]),
-            )
-          ]
+      appBar: AppBar(
+        title: Text(recipe['title'] ?? 'Sin título'),
+      ),
+      body: SingleChildScrollView(
+        child: RecipeDetailsCard(
+          label: recipe['title'] ?? 'Sin título',
+          imageUrl: recipe['image'],
+          description: recipe['description'],
         ),
-      )
+      ),
     );
   }
 }
 
+// El RecipeDetailsCard se queda igual que antes, sin cambios
+class RecipeDetailsCard extends StatelessWidget {
+  final String label;
+  final String? imageUrl;
+  final String? description;
 
-class _CustomAppBar extends StatelessWidget {
-
+  const RecipeDetailsCard({
+    Key? key,
+    required this.label,
+    this.imageUrl,
+    this.description,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SliverAppBar(
-        backgroundColor: Colors.white,
-        expandedHeight: 200,
-        floating: false,
-        pinned: true,
-        flexibleSpace: FlexibleSpaceBar(
-          titlePadding: EdgeInsets.all(0),
-          centerTitle: true,
-          title: Container(
-              width: double.infinity,
-              color: Colors.transparent,
-              padding: EdgeInsets.only(bottom: 10, right: 10, left: 10),
-              alignment: Alignment.bottomCenter,
-              child: Text('Prueba titulo 1', 
-                style: TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
-              )),
-          background: FadeInImage(
-              placeholder: AssetImage('assets/loading.gif'),
-              image: NetworkImage('https://picsum.photos/200'),
-              fit: BoxFit.cover),
-        ));
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (imageUrl != null)
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              child: FadeInImage(
+                placeholder: const AssetImage('assets/no-image.png'),
+                image: NetworkImage(imageUrl!),
+                width: double.infinity,
+                height: 180,
+                fit: BoxFit.cover,
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+          ),
+          if (description != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+              child: Text(
+                description!,
+                style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+              ),
+            ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
   }
 }

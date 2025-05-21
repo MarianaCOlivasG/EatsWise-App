@@ -43,6 +43,11 @@ dependencies:
   intl: ^0.19.0
   google_sign_in: ^6.3.0
   flutter_card_swiper: ^7.0.2
+  audioplayers: ^6.4.0
+  geolocator: ^14.0.0
+  google_maps_flutter: ^2.5.0
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
   
 dev_dependencies:
   flutter_test:
@@ -70,6 +75,8 @@ flutter:
   assets:
     - assets/
     - assets/icons/
+    - assets/RecipesIcons/
+    - assets/alarm.mp3
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

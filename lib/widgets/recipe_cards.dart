@@ -17,11 +17,11 @@ class RecipeCards extends StatelessWidget {
   Future<List<Recipe>> getRecipes() async {
     await Future.delayed(Duration(seconds: 2));
     return [
-      Recipe(name: 'Pollo con Salsa de limón', image: 'https://picsum.photos/200'),
-      Recipe(name: 'Salteado de Repollo con Huevo Frito', image: 'https://picsum.photos/200'),
-      Recipe(name: 'Lasaña de Berenjenas con Pollo', image: 'https://picsum.photos/200'),
-      Recipe(name: 'Pavo con Pasta y ensalada de Tomate y Aguacate', image: 'https://picsum.photos/200'),
-      Recipe(name: 'Albóndigas con Brócoli y Patatas', image: 'https://picsum.photos/200'),
+      Recipe(name: 'Pollo con Salsa de limón', image: 'assets/RecipesIcons/pollo-al-limon.jpg'),
+      Recipe(name: 'Salteado de Repollo con Huevo Frito', image: 'assets/RecipesIcons/repollo-salteado-huevo.jpg'),
+      Recipe(name: 'Lasaña de Berenjenas con Pollo', image: 'assets/RecipesIcons/Lasaña-de-pollo-y-berenjena.jpg'),
+      Recipe(name: 'Pavo con Pasta y ensalada de Tomate y Aguacate', image: 'assets/RecipesIcons/ensalada-de-pasta-y-pavo.jpg'),
+      Recipe(name: 'Albóndigas con Brócoli y Patatas', image: 'assets/RecipesIcons/albondigas-de-brocoli-patata.jpg'),
     ];
   }
 
@@ -37,7 +37,7 @@ class RecipeCards extends StatelessWidget {
           return Container(
             constraints: BoxConstraints(maxWidth: screenWidth * 0.4),
             height: screenHeight * 0.2,
-            child: Center(child: CupertinoActivityIndicator()),
+            child: const Center(child: CupertinoActivityIndicator()),
           );
         }
 
@@ -51,22 +51,16 @@ class RecipeCards extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    label,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
+                  Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   TextButton(
                     onPressed: () {
-                      // Navegamos a la pantalla que despliega todas las recetas
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const AllRecipesScreen(),
-                        ),
+                        MaterialPageRoute(builder: (context) => const AllRecipesScreen()),
                       );
                     },
-                    child: const Text('Ver todas'),
-                  )
+                    child: const Text('Ver todas', style: TextStyle(color: Colors.green)),
+                  ),
                 ],
               ),
             ),
@@ -115,10 +109,7 @@ class _RecipeCard extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            // Navega a la pantalla RecipeSteps sin pasar parámetros
-            builder: (context) => const RecipeSteps(),
-          ),
+          MaterialPageRoute(builder: (context) => RecipeSteps(recipeName: recipe.name)),
         );
       },
       child: Container(
@@ -132,7 +123,7 @@ class _RecipeCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               child: FadeInImage(
                 placeholder: const AssetImage('assets/no-image.png'),
-                image: NetworkImage(recipe.image),
+                image: AssetImage(recipe.image),
                 height: cardHeight,
                 width: cardWidth,
                 fit: BoxFit.cover,
@@ -143,7 +134,6 @@ class _RecipeCard extends StatelessWidget {
               recipe.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.left,
               style: TextStyle(
                 fontSize: screenWidth * 0.04,
                 fontWeight: FontWeight.w500,
@@ -156,58 +146,106 @@ class _RecipeCard extends StatelessWidget {
   }
 }
 
-// Pantalla que muestra todas las recetas
-class AllRecipesScreen extends StatelessWidget {
+class AllRecipesScreen extends StatefulWidget {
   const AllRecipesScreen({Key? key}) : super(key: key);
 
-  Future<List<Recipe>> getRecipes() async {
+  @override
+  State<AllRecipesScreen> createState() => _AllRecipesScreenState();
+}
+
+class _AllRecipesScreenState extends State<AllRecipesScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  List<Recipe> _allRecipes = [];
+  List<Recipe> _filteredRecipes = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadRecipes();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredRecipes = _allRecipes.where((recipe) {
+        return recipe.name.toLowerCase().contains(query);
+      }).toList();
+    });
+  }
+
+  Future<void> loadRecipes() async {
     await Future.delayed(Duration(seconds: 2));
-    return [
-      Recipe(name: 'Pollo con Salsa de limón', image: 'https://picsum.photos/200'),
-      Recipe(name: 'Salteado de Repollo con Huevo Frito', image: 'https://picsum.photos/200'),
-      Recipe(name: 'Lasaña de Berenjenas con Pollo', image: 'https://picsum.photos/200'),
-      Recipe(name: 'Pavo con Pasta y ensalada de Tomate y Aguacate', image: 'https://picsum.photos/200'),
-      Recipe(name: 'Albóndigas con Brócoli y Patatas', image: 'https://picsum.photos/200'),
+    final recipes = [
+      Recipe(name: 'Pollo con Salsa de limón', image: 'assets/RecipesIcons/pollo-al-limon.jpg'),
+      Recipe(name: 'Salteado de Repollo con Huevo Frito', image: 'assets/RecipesIcons/repollo-salteado-huevo.jpg'),
+      Recipe(name: 'Lasaña de Berenjenas con Pollo', image: 'assets/RecipesIcons/Lasaña-de-pollo-y-berenjena.jpg'),
+      Recipe(name: 'Pavo con Pasta y ensalada de Tomate y Aguacate', image: 'assets/RecipesIcons/ensalada-de-pasta-y-pavo.jpg'),
+      Recipe(name: 'Albóndigas con Brócoli y Patatas', image: 'assets/RecipesIcons/albondigas-de-brocoli-patata.jpg'),
     ];
+    setState(() {
+      _allRecipes = recipes;
+      _filteredRecipes = recipes;
+      _isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Todas las Recetas')),
-      body: FutureBuilder<List<Recipe>>(
-        future: getRecipes(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final recipes = snapshot.data!;
-          return ListView.builder(
-            itemCount: recipes.length,
-            itemBuilder: (context, index) {
-              final recipe = recipes[index];
-              return ListTile(
-                leading: Image.network(
-                  recipe.image,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                ),
-                title: Text(recipe.name),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      // Navega a RecipeSteps cuando se selecciona una receta
-                      builder: (context) => const RecipeSteps()
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Buscar receta por nombre...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          if (_isLoading)
+            const Expanded(child: Center(child: CircularProgressIndicator()))
+          else if (_filteredRecipes.isEmpty)
+            const Expanded(child: Center(child: Text('No se encontraron recetas')))
+          else
+            Expanded(
+              child: ListView.builder(
+                itemCount: _filteredRecipes.length,
+                itemBuilder: (context, index) {
+                  final recipe = _filteredRecipes[index];
+                  return ListTile(
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.asset(
+                        recipe.image,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      ),
                     ),
+                    title: Text(recipe.name),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => RecipeSteps(recipeName: recipe.name)),
+                      );
+                    },
                   );
                 },
-              );
-            },
-          );
-        },
+              ),
+            ),
+        ],
       ),
     );
   }

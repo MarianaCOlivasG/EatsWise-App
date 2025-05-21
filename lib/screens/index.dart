@@ -12,3 +12,5 @@ export 'package:myapp/screens/RegisterScreen.dart';
 export 'package:myapp/screens/DoNotThrowItAway.dart';
 export 'package:myapp/screens/RecipeSteps.dart';
 export 'package:myapp/screens/StoreUnionScreen.dart';
+export 'package:myapp/screens/AIGeneratedRecipesScreen.dart';
+//export 'package:myapp/screens/ProfileScreen.dart';

@@ -3,6 +3,7 @@ import 'package:myapp/providers/ingredient_provider.dart';
 import 'package:myapp/theme/my_colors.dart';
 import 'package:myapp/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
+import 'package:myapp/providers/recipe_provider.dart';
 
 class InputSearch extends SearchDelegate<String> {
   final List<Map<String, String>> ingredients;
@@ -48,7 +49,6 @@ class InputSearch extends SearchDelegate<String> {
 
     return Stack(
       children: [
-        // Contenido desplazable
         Padding(
           padding: EdgeInsets.only(bottom: selected.isNotEmpty ? 70 : 0),
           child: SingleChildScrollView(
@@ -88,25 +88,46 @@ class InputSearch extends SearchDelegate<String> {
             right: 0,
             child: Center(
               child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 20
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 width: MediaQuery.of(context).size.width,
                 child: CustomButton(
-                  text: 'Empezar a cocinar', 
+                  text: 'Empezar a cocinar',
                   color: MyColors.primary,
-                  onPressed: () {
-                    Navigator.pushNamed(context, 'search');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "¡Vamos a cocinar con: ${selected.join(', ')}!",
+                  onPressed: () async {
+                    // Muestra diálogo de carga
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) => AlertDialog(
+                        content: Row(
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(width: 20),
+                            Expanded(child: Text("Nuestra IA está trabajando...")),
+                          ],
                         ),
                       ),
                     );
+
+                    try {
+                      final ingredientProvider = Provider.of<IngredientProvider>(context, listen: false);
+                      final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
+
+                      // Llama a la API para obtener recetas
+                      await recipeProvider.getRecipes(ingredientProvider.selectedIngredients);
+
+                      // Navega a la pantalla 'search' con las recetas como argumento
+                      Navigator.pushNamed(
+                        context,
+                        'search',
+                        arguments: recipeProvider.recipes,
+                      );
+                    } finally {
+                      // Cierra el diálogo aunque haya error
+                      Navigator.of(context).pop();
+                    }
                   },
-                )
-                
+                ),
               ),
             ),
           ),
@@ -114,85 +135,81 @@ class InputSearch extends SearchDelegate<String> {
     );
   }
 
-  
-
   Widget _buildSelectedIngredients(BuildContext context) {
-  final provider = Provider.of<IngredientProvider>(context);
-  final selected = provider.selectedIngredients;
+    final provider = Provider.of<IngredientProvider>(context);
+    final selected = provider.selectedIngredients;
 
-  final selectedData = ingredients
-      .where((ingredient) => selected.contains(ingredient['value']))
-      .toList();
+    final selectedData = ingredients
+        .where((ingredient) => selected.contains(ingredient['value']))
+        .toList();
 
-  if (selectedData.isEmpty) return SizedBox.shrink();
+    if (selectedData.isEmpty) return SizedBox.shrink();
 
-  return SizedBox(
-    width: MediaQuery.of(context).size.width,
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Ingredientes seleccionados:",
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: selectedData.map((ingredient) {
-                return Container(
-                  margin: EdgeInsets.only(right: 12),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 30 * 0.7, 
-                            backgroundImage: AssetImage(ingredient['image']!),
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            ingredient['label']!,
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 13),
-                          ),
-                        ],
-                      ),
-                      Positioned(
-                        top: -4,
-                        right: -4,
-                        child: GestureDetector(
-                          onTap: () {
-                            provider.toggleIngredient(ingredient['value']!);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Ingredientes seleccionados:",
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: selectedData.map((ingredient) {
+                  return Container(
+                    margin: EdgeInsets.only(right: 12),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 21, // 70% de 30
+                              backgroundImage: AssetImage(ingredient['image']!),
                             ),
-                            padding: EdgeInsets.all(3),
-                            child: Icon(
-                              Icons.close,
-                              size: 12 * 0.7, // Reducido al 70% del tamaño original (30% más pequeño)
-                              color: Colors.white,
+                            SizedBox(height: 6),
+                            Text(
+                              ingredient['label']!,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 13),
+                            ),
+                          ],
+                        ),
+                        Positioned(
+                          top: -4,
+                          right: -4,
+                          child: GestureDetector(
+                            onTap: () {
+                              provider.toggleIngredient(ingredient['value']!);
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              padding: EdgeInsets.all(3),
+                              child: Icon(
+                                Icons.close,
+                                size: 8.4, // 70% de 12
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
-
-
+    );
+  }
 }
